@@ -1,0 +1,19 @@
+<html>
+<head>
+  <title>Aeoid Sample App</title>
+</head>
+<body>
+  {% if user %}
+    <p>Hello, {{user.nickname}}! Do you want to <a href="{{logout_url}}">Log out?</p>
+  {% else %}
+    <p><a href="{{login_url}}">Log In</a></p>
+  {% endif %}
+
+  <table>
+    <tr><th>Nickname</th><th>URL</th><th>When</th></tr>
+    {% for login in logins %}
+      <tr><td>{{login.user.nickname}}</td><td>{{login.user.user_id}}</td><td>{{login.timestamp}}</td></tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
