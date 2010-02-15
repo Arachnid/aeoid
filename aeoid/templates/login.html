@@ -1,11 +1,87 @@
 {% extends "base.html" %}
 {% block title %}Log In{% endblock %}
+{% block head%}
+  <link rel="stylesheet" type="text/css" media="screen" href="static/openid.css" />
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.1/jquery.min.js"></script>
+  <script type="text/javascript" src="static/jquery.openid.js"></script>
+  <script type="text/javascript">  $(function() { $("form.openid").openid(); });</script>
+{% endblock %}
 {% block body %}
-  <h1>Log In</h1>
-  <p>Enter your OpenID URL to log in.</p>
-  <form method="GET" action="{{login_url}}">
+  <form class="openid" method="post" action="{{login_url}}"> 
     <input type="hidden" name="continue" value="{{continue|escape}}" />
-    <input type="text" name="openid_url" id="openid" />
-    <input type="submit" value="Log In" />
+    <div>
+      <ul class="providers">
+        <li class="openid highlight" title="OpenID">
+          <img alt="icon" src="static/images/openidW.png" />
+          <span><strong>http://{your-openid-url}</strong></span>
+        </li>
+        <li class="direct" title="Google">
+          <img alt="icon" src="static/images/googleW.png" />
+          <span>https://www.google.com/accounts/o8/id</span>
+        </li>
+        <li class="direct" title="Yahoo">
+          <img alt="icon" src="static/images/yahooW.png" />
+          <span>http://yahoo.com/</span>
+        </li>
+        <li class="username" title="AOL screen name">
+          <img alt="icon" src="static/images/aolW.png" />
+          <span>http://openid.aol.com/<strong>username</strong></span>
+        </li>
+        <li class="username" title="MySpace user name">
+          <img alt="icon" src="static/images/myspaceW.png" />
+          <span>http://www.myspace.com/<strong>username</strong></span>
+        </li>
+        <li class="username" title="MyOpenID user name">
+          <img alt="icon" src="static/images/myopenid.png" />
+          <span>http://<strong>username</strong>.myopenid.com/</span>
+        </li>
+        <li class="username" title="Flickr user name">
+          <img alt="icon" src="static/images/flickr.png" />
+          <span>http://flickr.com/<strong>username</strong>/</span>
+        </li>
+        <li class="username" title="Technorati user name">
+          <img alt="icon" src="static/images/technorati.png" />
+          <span>http://technorati.com/people/technorati/<strong>username</strong>/</span>
+        </li>
+        <li class="username" title="Wordpress blog name">
+          <img alt="icon" src="static/images/wordpress.png" />
+          <span>http://<strong>username</strong>.wordpress.com</span>
+        </li>
+        <li class="username" title="Blogger blog name">
+          <img alt="icon" src="static/images/blogger.png" />
+          <span>http://<strong>username</strong>.blogspot.com/</span>
+        </li>
+        <li class="username" title="LiveJournal blog name">
+          <img alt="icon" src="static/images/livejournal.png" />
+          <span>http://<strong>username</strong>.livejournal.com</span>
+        </li>
+        <li class="username" title="ClaimID user name">
+          <img alt="icon" src="static/images/claimid.png" />
+          <span>http://claimid.com/<strong>username</strong></span>
+        </li>
+        <li class="username" title="Vidoop user name">
+          <img alt="icon" src="static/images/vidoop.png" />
+          <span>http://<strong>username</strong>.myvidoop.com/</span>
+        </li>
+        <li class="username" title="Verisign user name">
+          <img alt="icon" src="static/images/verisign.png" />
+          <span>http://<strong>username</strong>.pip.verisignlabs.com/</span>
+        </li>
+      </ul>
+    </div>
+    <fieldset> 
+      <label for="openid_username">Enter your <span>Provider user name</span></label> 
+      <div>
+        <span></span><input type="text" name="openid_username" /><span></span> 
+        <input type="submit" value="Log In" />
+      </div> 
+    </fieldset> 
+    <fieldset> 
+      <label for="openid_identifier">Enter your <a class="openid_logo" href="http://openid.net">OpenID</a></label> 
+      <div>
+        <input type="text" name="openid_url" /> 
+        <input type="submit" value="Log In" />
+      </div> 
+    </fieldset> 
   </form>
 {% endblock %}

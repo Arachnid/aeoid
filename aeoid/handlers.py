@@ -154,8 +154,77 @@ class LogoutHandler(BaseHandler):
     self.redirect(self.request.get('continue', '/'))
 
 
+# highly modified from example at:
+# http://www.ipsojobs.com/blog/2008/06/17/how-to-create-a-simple-but-powerful-cdn-with-google-app-engine-gae/
+class StaticHandler(webapp.RequestHandler):
+  allowed_exts = { 'js': 'application/x-javascript', 'css': 'text/css', 'png': 'image/png' }
+  
+  def get(self, filepath, fileext):
+    # build full system path to requested file
+    resourcepath = os.path.join( os.path.dirname(__file__), 'resources', filepath + '.' + fileext )
+    
+    # only allow specified file extensions
+    if not self.allowed_exts.has_key(fileext):
+      logging.error("Not an allowed file extension: %s" % fileext)
+      self.error(404)
+      return
+    
+    # file must exist before we can return it
+    if not os.path.isfile(resourcepath):
+      logging.error("Not an existing file: '%s'" % resourcepath)
+      self.error(404)
+      return
+    
+    # only allow absolute paths (no symlinks or up-level references, for example)
+    testpath = os.path.normcase(resourcepath)
+    if testpath != os.path.abspath(testpath):
+      logging.error("Not an absolute path to file: '%s' != '%s'" % (testpath, os.path.abspath(testpath)) )
+      self.error(403)
+      return
+    
+    # set appropriate content-type
+    self.response.headers['Content-Type'] = self.allowed_exts[fileext]
+    
+    # serve file (supporting client-side caching)
+    try:
+      import datetime
+      fileinfo = os.stat(resourcepath)
+      lastmod = datetime.datetime.fromtimestamp(fileinfo[8])
+      if self.request.headers.has_key('If-Modified-Since'):
+        dt = self.request.headers.get('If-Modified-Since').split(';')[0]
+        modsince = datetime.datetime.strptime(dt, "%a, %d %b %Y %H:%M:%S %Z")
+        if modsince >= lastmod:
+        # The file is older than the cached copy (or exactly the same)
+          self.error(304)
+          return
+        else:
+        # The file is newer
+          self.output_file(resourcepath, lastmod)
+      else:
+        self.output_file(resourcepath, lastmod)
+    except Exception, e:
+      logging.error("Failed to serve file: %s" % e)
+      self.error(404)
+      return
+
+  def output_file(self, resourcepath, lastmod):
+    import datetime
+    try:
+      self.response.headers['Cache-Control']='public, max-age=31536000'
+      self.response.headers['Last-Modified'] = lastmod.strftime("%a, %d %b %Y %H:%M:%S GMT")
+      expires=lastmod+datetime.timedelta(days=365)
+      self.response.headers['Expires'] = expires.strftime("%a, %d %b %Y %H:%M:%S GMT")
+      self.response.out.write( file(resourcepath, 'rb').read() )
+      return
+    except IOError, e:
+      logging.error("Failed to output file: %s" % e)
+      self.error(404)
+      return
+
+
 handler_map = [
     (users.OPENID_LOGIN_PATH, BeginLoginHandler),
     (users.OPENID_FINISH_PATH, FinishLoginHandler),
     (users.OPENID_LOGOUT_PATH, LogoutHandler),
+    (users.OPENID_STATIC_PATH, StaticHandler),
 ]

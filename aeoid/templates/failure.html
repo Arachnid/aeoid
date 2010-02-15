@@ -1,11 +1,7 @@
-{% extends "base.html" %}
+{% extends "login.html" %}
 {% block title %}Login Failed{% endblock %}
 {% block body %}
   <h1>Login Failed</h1>
   <p>Login failed or was cancelled. Do you want to try again?</p>
-  <form method="GET" action="{{login_url}}">
-    <input type="hidden" name="continue" value="{{continue|escape}}" />
-    <input type="text" name="openid_url" value="{{response.identity_url}}" id="openid" />
-    <input type="submit" value="Log In" />
-  </form>
+  {{ block.super }}
 {% endblock %}
