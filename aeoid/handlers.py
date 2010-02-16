@@ -32,7 +32,7 @@ from aeoid import users
 class BaseHandler(webapp.RequestHandler):
   def initialize(self, request, response):
     super(BaseHandler, self).initialize(request, response)
-    self.session = self.request.environ.get('beaker.session')
+    self.session = self.request.environ.get('aeoid.beaker.session')
 
   def render_template(self, filename, template_args=None):
     if not template_args:

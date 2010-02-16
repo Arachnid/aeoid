@@ -32,7 +32,7 @@ class _MiddlewareImpl(object):
     self.oid_app = webapp.WSGIApplication(handlers.handler_map, debug=debug)
 
   def __call__(self, environ, start_response):
-    session = environ['beaker.session']
+    session = environ['aeoid.beaker.session']
     if 'aeoid.user' in session:
       os.environ['aeoid.user'] = environ['aeoid.user'] = session['aeoid.user']
     try:
@@ -49,9 +49,10 @@ def AeoidMiddleware(application, session_opts=None, debug=False):
 
   beaker_opts = {
       'session.type': 'ext:google',
+      'session.key': 'aeoid.beaker.session.id',
   }
   if session_opts:
     beaker_opts.update(session_opts)
   application = _MiddlewareImpl(application, debug)
-  application = SessionMiddleware(application, beaker_opts)
+  application = SessionMiddleware(wrap_app=application, config=beaker_opts, environ_key='aeoid.beaker.session')
   return application
