@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Log Out{% endblock %}
+{% block body %}
+  <h1>Logging Out...</h1>
+  <p>Are you sure you want to log out?</p>
+  <p>
+    <a href="{{confirmurl}}">Yes</a>
+    <a href="{{cancelurl}}">No</a>
+  </p>
+{% endblock %}

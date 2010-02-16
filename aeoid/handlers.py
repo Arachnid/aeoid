@@ -147,11 +147,21 @@ class FinishLoginHandler(BaseHandler):
 
 class LogoutHandler(BaseHandler):
   def get(self):
-    # TODO: Handle the possibility of XSRF forcing a user to log out
-    if 'aeoid.user' in self.session:
-      del self.session['aeoid.user']
-    self.session.save()
-    self.redirect(self.request.get('continue', '/'))
+    # before logging user out, check that http referer contains the current hostname
+    httphost = str(self.request.environ.get('HTTP_HOST'))
+    httprefer = str(self.request.environ.get('HTTP_REFERER'))
+    # if it does, log them out as expected
+    if httprefer.startswith(('http://'+httphost,'https://'+httphost)):
+      if 'aeoid.user' in self.session:
+        del self.session['aeoid.user']
+      self.session.save()
+      self.redirect(self.request.get('continue', '/'))
+    # if it doesn't, prompt them via an interstitial page
+    else:
+      self.render_template('logout.html', {
+          'confirmurl': '?continue='+self.request.get('continue', '/'),
+          'cancelurl': self.request.get('continue', '/')
+      })
 
 
 # highly modified from example at:
