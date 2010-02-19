@@ -82,7 +82,6 @@ class BeginLoginHandler(BaseHandler):
     for attruri in OPENID_AX_ATTRS:
         ax_request.add(ax.AttrInfo(attruri, required=True, alias=OPENID_AX_ATTRS[attruri]))
     request.addExtension(ax_request)
-    # TODO: determine during discovery whether SREG and/or AX are available, and don't add them if they're not?
     # assemble and send redirect
     continue_url = self.request.get('continue', '/')
     return_to = "%s%s?continue=%s" % (self.request.host_url,
