@@ -2,7 +2,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
   <title>{% block title %}{% endblock %}</title>
-  {% block head %}{% endblock %}
+  {% block head %}
+  <link rel="stylesheet" type="text/css" media="screen" href="static/openid.css" />
+  {% endblock %}
 </head>
 <body>
   {% block body %}{% endblock %}
