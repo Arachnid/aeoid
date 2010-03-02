@@ -22,6 +22,7 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from openid.consumer.consumer import Consumer
 from openid.extensions import sreg
+from openid.extensions import ax
 
 from aeoid import store
 from aeoid import users
@@ -58,6 +59,10 @@ class BeginLoginHandler(BaseHandler):
     # TODO: Support custom specification of extensions
     # TODO: Don't ask for data we already have, perhaps?
     request.addExtension(sreg.SRegRequest(required=['nickname', 'email']))    
+    ax_req = ax.FetchRequest()
+    ax_req.add(ax.AttrInfo('http://axschema.org/contact/email', alias='email',required=True))
+    ax_req.add(ax.AttrInfo('http://axschema.org/namePerson/first', alias='firstname',required=True))
+    request.addExtension(ax_req)
 
     continue_url = self.request.get('continue', '/')
     return_to = "%s%s?continue=%s" % (self.request.host_url,
@@ -72,10 +77,46 @@ class BeginLoginHandler(BaseHandler):
 class FinishLoginHandler(BaseHandler):
   def finish_login(self, response):
     sreg_data = sreg.SRegResponse.fromSuccessResponse(response) or {}
+    #ax_fetch = ax.FetchResponse.fromSuccessResponse(response)
+    #if ax_fetch:
+    #  ax_data = ax_fetch.getExtensionArgs();
+    #else:
+    #  ax_data = {}
+      
+    #for k, v in ax_data.items():
+    #  logging.info("key: " + k + ", value: " + v)
+    
+    #user_info = users.UserInfo.update_or_insert(
+    #    response.endpoint.claimed_id,
+    #    server_url=response.endpoint.server_url,
+    #    **dict(sreg_data))
+
+    ax_data = {}
+    ax_fetch = ax.FetchResponse.fromSuccessResponse(response)
+    if ax_fetch:
+      args = ax_fetch.getExtensionArgs()
+      i = 0
+      while "type.ext%i" % i in args:
+        t = args["type.ext%i" % i]
+        logging.info("type: %s" % t)
+        if t == "http://axschema.org/namePerson/first":
+          p = "nickname"
+        elif t == "http://axschema.org/contact/email":
+          p = "email"
+        else:
+          p = "unknown"
+        ax_data[p] = args["value.ext%i.1" % i]
+        i = i + 1
+
+    res_data = {}
+    res_data.update(sreg_data)
+    res_data.update(ax_data)
+    
     user_info = users.UserInfo.update_or_insert(
         response.endpoint.claimed_id,
         server_url=response.endpoint.server_url,
-        **dict(sreg_data))
+        **dict(res_data))
+    
     self.session['aeoid.user'] = str(user_info.key())
     self.session.save()
     users._current_user = users.User(None, _from_model_key=user_info.key(),
