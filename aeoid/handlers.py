@@ -21,6 +21,7 @@ import os
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from openid.consumer.consumer import Consumer
+from openid.consumer.discover import DiscoveryFailure
 from openid.extensions import sreg
 from openid.extensions import ax
 
@@ -53,22 +54,27 @@ class BeginLoginHandler(BaseHandler):
       })
       return
 
-    consumer = self.get_consumer()
-    request = consumer.begin(openid_url)
-    
-    # TODO: Support custom specification of extensions
-    # TODO: Don't ask for data we already have, perhaps?
-    request.addExtension(sreg.SRegRequest(required=['nickname', 'email']))    
-    ax_req = ax.FetchRequest()
-    ax_req.add(ax.AttrInfo('http://axschema.org/contact/email', alias='email',required=True))
-    ax_req.add(ax.AttrInfo('http://axschema.org/namePerson/first', alias='firstname',required=True))
-    request.addExtension(ax_req)
+    try:
+      consumer = self.get_consumer()
+      request = consumer.begin(openid_url)
+			
+      # TODO: Support custom specification of extensions
+      # TODO: Don't ask for data we already have, perhaps?
+      request.addExtension(sreg.SRegRequest(required=['nickname', 'email']))    
+      ax_req = ax.FetchRequest()
+      ax_req.add(ax.AttrInfo('http://axschema.org/contact/email', alias='email',required=True))
+      ax_req.add(ax.AttrInfo('http://axschema.org/namePerson/first', alias='firstname',required=True))
+      request.addExtension(ax_req)
+      
+      continue_url = self.request.get('continue', '/')
+      return_to = "%s%s?continue=%s" % (self.request.host_url,
+                                        users.OPENID_FINISH_PATH, continue_url)
+      self.redirect(request.redirectURL(self.request.host_url, return_to))
+      self.session.save()
+    except DiscoveryFailure, ex:
+      logging.error("Unexpected error in OpenID authentication: %s" % ex)
+      self.render_template('error.html', {'identity_url': openid_url})
 
-    continue_url = self.request.get('continue', '/')
-    return_to = "%s%s?continue=%s" % (self.request.host_url,
-                                      users.OPENID_FINISH_PATH, continue_url)
-    self.redirect(request.redirectURL(self.request.host_url, return_to))
-    self.session.save()
 
   def post(self):
     self.get()
@@ -136,7 +142,7 @@ class FinishLoginHandler(BaseHandler):
       })
     else:
       logging.error("Unexpected error in OpenID authentication: %s", response)
-      self.render_template('error.html', {'response': response})
+      self.render_template('error.html', {'identity_url': response.identity_url()})
 
 
 class LogoutHandler(BaseHandler):
