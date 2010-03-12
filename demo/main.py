@@ -17,6 +17,7 @@
 
 import os
 import logging
+import urllib
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -39,6 +40,18 @@ class LoginHandler(webapp.RequestHandler):
     self.redirect('/')
 
 
+class AppsFederationHandler(webapp.RequestHandler):
+  """Handles openid login for federated Google Apps Marketplace apps."""
+  def get(self):
+    domain = self.request.get("domain")
+    if not domain:
+      self.redirect("/login")
+    else:
+      openid_url = "https://www.google.com/accounts/o8/site-xrds?hd=" + domain
+      self.redirect("%s?openid_url=%s" %
+                    (users.OPENID_LOGIN_PATH, urllib.quote(openid_url)))
+
+
 class MainHandler(webapp.RequestHandler):
   def render_template(self, file, template_vals):
     path = os.path.join(os.path.dirname(__file__), 'templates', file)
@@ -59,6 +72,7 @@ class MainHandler(webapp.RequestHandler):
 application = webapp.WSGIApplication([
     ('/', MainHandler),
     ('/login', LoginHandler),
+    ('/apps_login', AppsFederationHandler),
 ], debug=True)
 application = middleware.AeoidMiddleware(application)
 
